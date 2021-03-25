@@ -50,29 +50,38 @@ def stifness_matrix(nodes, Element_number,L):
         
     return indv_stifness_matrix , global_matrix
         
-def boundary_conditions(nodes,Element_number, L , F):
+def boundary_conditions(nodes,Element_number, L , F, B):
     
     if F[1] == 'distributed':
         if F[2][1] == L:
-            F_nodes = np.array([])
-            F_at_node = L/len(nodes)
-            for i in range(len(nodes)):
+            M = 'M' + str(nodes[0])
+            F_at_node = F[0]/L
+            F_nodes = np.array([nodes [0] , F_at_node , M])
+            for i in range(1 , len(nodes)):
                 moment = 'M' + str(i)
-                F_nodes = np.append(F_nodes, [i , F_at_node , moment])
+                F_nodes = np.row_stack((F_nodes, [i , F_at_node , moment]))
     
-    Deformation_nodes = np.array([])
+    d = 'd' + str(nodes[0])
+    r = 'r' + str(nodes[0])
+    Deformation_nodes = np.array([nodes[0], d[0], r[0]])
     
-    for i in nodes:
+    for i in range(1, len(nodes)):
         d = 'd' + str(i)
         r = 'r' + str(i)
-        Deformation_nodes = np.append(Deformation_nodes , [i , d ,r])
+        Deformation_nodes = np.row_stack((Deformation_nodes , [i , d ,r] ))
                 
-    for i in B:
-       if i[0] in nodes:
-           if 
-        
+    for b in B:
+       if b[0] in nodes:
+           index = np.where(nodes == b[0])
+           if b[1] == 'roller':
+               Deformation_nodes[index[0][0]][1] = 0
+               F_nodes[index[0][0]][2] = 0
+
+           if b[1] ==   'pin':
+               Deformation_nodes[index[0][0]][1] = 0
+               F_nodes[index[0][0]][2] = 0
     
-    
+    return F_nodes , Deformation_nodes
 
 def main():
     
@@ -80,7 +89,7 @@ def main():
     L = 4
 
 # boundary conditions
-    B = [[0 , 'roller'], [L, 'fixed']]
+    B = [[0 , 'roller'], [L, 'pin']]
 
 # force
     
@@ -88,7 +97,7 @@ def main():
 
 # number of element
     
-    Element_number = 5
+    Element_number = 4
     
     nodes = mesh(L, Element_number,F)
     indv_stifness_matrix , global_matrix = stifness_matrix(nodes, Element_number , L)
